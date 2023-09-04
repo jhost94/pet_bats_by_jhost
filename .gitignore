@@ -633,5 +633,4 @@ MigrationBackup/
 .classpath
 .build
 .gradle
-.project
 .settings
