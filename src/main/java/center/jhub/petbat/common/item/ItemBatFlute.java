@@ -1,5 +1,6 @@
-package center.jhub.petbat.common;
+package center.jhub.petbat.common.item;
 
+import center.jhub.petbat.common.EntityPetBat;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -9,7 +10,7 @@ import net.minecraft.world.World;
 
 public class ItemBatFlute extends Item {
 
-    protected ItemBatFlute() {
+    public ItemBatFlute() {
         super();
         maxStackSize = 1;
         setMaxDamage(0);

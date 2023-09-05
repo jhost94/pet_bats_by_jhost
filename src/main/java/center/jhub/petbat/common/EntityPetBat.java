@@ -8,6 +8,7 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIHurtByTarget;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -17,17 +18,25 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.player.EntityInteractEvent;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import center.jhub.petbat.common.batAI.PetBatAIAttack;
 import center.jhub.petbat.common.batAI.PetBatAIFindSittingSpot;
 import center.jhub.petbat.common.batAI.PetBatAIFlying;
 import center.jhub.petbat.common.batAI.PetBatAIOwnerAttacked;
 import center.jhub.petbat.common.batAI.PetBatAIOwnerAttacks;
+import center.jhub.petbat.common.item.ItemPocketedPetBat;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
 
 public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpawnData {
     private String ownerName;
     private String petName;
+    private int attack;
+    
     private EntityPlayer owner;
     private EntityItem foodAttackTarget;
     private boolean fluteOut;
@@ -39,12 +48,23 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
 
     private ChunkCoordinates hangSpot;
 
+    
+    /**
+     * TEMP
+     * list of items that have special effects
+     * */
+    private final List<Item> interactiableItems = new ArrayList();
+
     public EntityPetBat(World par1World) {
         super(par1World);
         setSize(0.5F, 0.9F);
         setIsBatHanging(false);
         ownerName = "";
         petName = "";
+        attack = 1;
+        
+        interactiableItems.add(Items.diamond);
+        
         lastOwnerX = lastOwnerY = lastOwnerZ = 0;
         hangSpot = null;
         fluteOut = false;
@@ -73,9 +93,14 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     @Override
     protected void entityInit() {
         super.entityInit();
-        dataWatcher.addObject(16, new Byte((byte) 0));
-        dataWatcher.addObject(17, new Integer((int) 0));
-        dataWatcher.addObject(18, new Byte((byte) 0));
+        // is hanging
+        dataWatcher.addObject(16, (byte) 0);
+        // xp
+        dataWatcher.addObject(17, (int) 0);
+        // is staying
+        dataWatcher.addObject(18, (byte) 0);
+        // attack
+        dataWatcher.addObject(19, (int) 0);
     }
 
     public void setNames(String ownerName, String petName) {
@@ -168,14 +193,30 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
 
     @Override
     public boolean interact(EntityPlayer player) {
-        if (getIsBatHanging() && player.getCommandSenderName().equals(ownerName)) {
-            setIsBatStaying(!getIsBatStaying());
-            player.addChatMessage(new ChatComponentText(petName + ": " + 
-            (getIsBatStaying() ? StatCollector.translateToLocal("translation.PetBat:staying")
-                    : StatCollector.translateToLocal("translation.PetBat:notstaying"))));
-            return true;
-        }
+    	ItemStack item = player.inventory.getCurrentItem();
+    	
+    	if (getIsBatHanging() && player.getCommandSenderName().equals(ownerName)) {
+    		if	(item != null && interactiableItems.contains(item.getItem())) {
+    			this.givePetItem(player, item.getItem());
+    		} else {
+    			setIsBatStaying(!getIsBatStaying());
+                player.addChatMessage(new ChatComponentText(petName + ": " + 
+                (getIsBatStaying() ? StatCollector.translateToLocal("translation.PetBat:staying")
+                        : StatCollector.translateToLocal("translation.PetBat:notstaying"))));
+    		}
+             return true;
+    	}
+    	
         return false;
+    }
+    
+    private void givePetItem(EntityPlayer player, Item item) {
+    	if (item == Items.diamond) {
+            player.inventory.consumeInventoryItem(Items.diamond);
+            addBatAttack(1);
+            player.addChatMessage(new ChatComponentText(petName + ": has gained +1 attack."));
+			player.addChatMessage(new ChatComponentText(petName + ": has " + getBatAttack() + " attack."));
+        }
     }
 
     /**
@@ -187,7 +228,7 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     @Override
     public boolean attackEntityAsMob(Entity target) {
         int level = getBatLevel();
-        int damage = 1 + level;
+        int damage = getBatAttack() + level;
 
         float prevHealth = 0;
         EntityLivingBase livingTarget = null;
@@ -442,5 +483,14 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     public void setGlistering(boolean set) {
         glister = set;
     }
-
+    
+    public int getBatAttack() {
+    	return dataWatcher.getWatchableObjectInt(19);
+    }
+    
+    public int addBatAttack(int atk) {
+    	int initialAttack = getBatAttack();
+    	dataWatcher.updateObject(19, initialAttack + atk);
+    	return getBatAttack();
+    }
 }

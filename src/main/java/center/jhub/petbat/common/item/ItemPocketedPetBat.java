@@ -1,5 +1,7 @@
-package center.jhub.petbat.common;
+package center.jhub.petbat.common.item;
 
+import center.jhub.petbat.common.EntityPetBat;
+import center.jhub.petbat.common.PetBatMod;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
@@ -11,7 +13,7 @@ import net.minecraft.world.World;
 
 public class ItemPocketedPetBat extends Item {
 
-    protected ItemPocketedPetBat() {
+    public ItemPocketedPetBat() {
         super();
         maxStackSize = 1;
         setMaxDamage(28);
@@ -57,6 +59,7 @@ public class ItemPocketedPetBat extends Item {
         writeCompoundStringToItemStack(batstack, "petbatmod", "Owner", batEnt.getOwnerName());
         writeCompoundIntegerToItemStack(batstack, "petbatmod", "BatXP", batEnt.getBatExperience());
         writeCompoundFloatToItemStack(batstack, "petbatmod", "health", batEnt.getHealth());
+        writeCompoundIntegerToItemStack(batstack, "petbatmod", "BatDamage", batEnt.getBatAttack());
         batstack.getTagCompound().getCompoundTag("petbatmod").setFloat("health", batEnt.getHealth());
         batstack.setItemDamage((int) invertHealthValue(batEnt.getHealth(), batEnt.getMaxHealth()));
         return batstack;
@@ -67,12 +70,14 @@ public class ItemPocketedPetBat extends Item {
         String owner = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getString("Owner") : player.getCommandSenderName();
         String name = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("display").getString("Name") : "Battus Genericus";
         int xp = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatXP") : 0;
+        int atk = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatDamage") : 0;
         if (owner.equals("")) owner = player.getCommandSenderName();
         if (name.equals("")) name = "Battus Genericus";
         batEnt.setNames(owner, name);
         batEnt.setOwnerEntity(player);
         batEnt.setBatExperience(xp);
         batEnt.setHealth(batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getFloat("health") : batEnt.getMaxHealth());
+        batEnt.addBatAttack(atk);
         return batEnt;
     }
     

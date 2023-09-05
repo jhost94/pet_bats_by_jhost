@@ -10,8 +10,8 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
 import center.jhub.petbat.common.EntityPetBat;
-import center.jhub.petbat.common.ItemPocketedPetBat;
 import center.jhub.petbat.common.PetBatMod;
+import center.jhub.petbat.common.item.ItemPocketedPetBat;
 
 public class PetBatAIFlying extends EntityAIBase {
     private final int BAT_OWNER_FOLLOW_Y_OFFSET = 3;
