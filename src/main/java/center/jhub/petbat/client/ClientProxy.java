@@ -3,6 +3,7 @@ package center.jhub.petbat.client;
 import net.minecraft.item.ItemStack;
 import center.jhub.petbat.common.EntityPetBat;
 import center.jhub.petbat.common.Proxy;
+import center.jhub.petbat.common.item.ItemPocketedPetBat;
 import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.client.registry.RenderingRegistry;
 

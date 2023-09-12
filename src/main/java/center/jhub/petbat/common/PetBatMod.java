@@ -24,6 +24,8 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.BreakSpeed;
+import center.jhub.petbat.common.item.ItemBatFlute;
+import center.jhub.petbat.common.item.ItemPocketedPetBat;
 import center.jhub.petbat.common.network.BatNamePacket;
 import center.jhub.petbat.common.network.NetworkHelper;
 import cpw.mods.fml.common.Loader;
@@ -42,6 +44,22 @@ public class PetBatMod implements Proxy {
     private Item TAME_ITEM_ID;
     public final byte BAT_MAX_LVL = 1;
 
+    private Field entityBatFlightCoords;
+    public Item itemPocketedBat;
+    public Configuration config;
+    public Item itemBatFlute;
+    private boolean batInventoryTeleport;
+    
+    @SidedProxy(clientSide = "center.jhub.petbat.client.ClientProxy", serverSide = "center.jhub.petbat.common.PetBatMod")
+    public static Proxy proxy;
+    
+    @Instance(value = "PetBat")
+    private static PetBatMod instance;
+
+    public static PetBatMod instance() {
+        return instance;
+    }
+    
     /**
      * Interesting
      */
@@ -123,23 +141,6 @@ public class PetBatMod implements Proxy {
         return StatCollector.translateToLocal("translation.PetBat:batlevel" + finalLevel + "desc");
     }
     
-    private Field entityBatFlightCoords;
-    public Item itemPocketedBat;
-    public Configuration config;
-    public Item itemBatFlute;
-    
-    private boolean glisterBatEnabled;
-    private boolean batInventoryTeleport;
-    
-    @SidedProxy(clientSide = "center.jhub.petbat.client.ClientProxy", serverSide = "center.jhub.petbat.common.PetBatMod")
-    public static Proxy proxy;
-    
-    @Instance(value = "PetBat")
-    private static PetBatMod instance;
-    public static PetBatMod instance() {
-        return instance;
-    }
-    
     public NetworkHelper networkHelper;
     
     @EventHandler
@@ -174,7 +175,6 @@ public class PetBatMod implements Proxy {
     
     @EventHandler
     public void modsLoaded(FMLPostInitializationEvent evt) {
-        glisterBatEnabled = Loader.isModLoaded("DynamicLights");
         TAME_ITEM_ID = Items.pumpkin_pie;
     }
 	
@@ -183,12 +183,10 @@ public class PetBatMod implements Proxy {
 	}
     
     @SubscribeEvent
-    public void onPlayerLeftClick(BreakSpeed event)
-    {
+    public void onPlayerLeftClick(BreakSpeed event) {
         EntityPlayer p = event.entityPlayer;
         ItemStack item = p.inventory.getCurrentItem();
-        if (item != null && item.getItem() == TAME_ITEM_ID)
-        {
+        if (item != null && item.getItem() == TAME_ITEM_ID) {
             @SuppressWarnings("unchecked")
             List<Entity> entityList = p.worldObj.getEntitiesWithinAABBExcludingEntity(p, p.boundingBox.expand(10D, 10D, 10D));
             ChunkCoordinates coords = new ChunkCoordinates((int)(p.posX+0.5D), (int)(p.posY+1.5D), (int)(p.posZ+0.5D));
@@ -207,35 +205,28 @@ public class PetBatMod implements Proxy {
     @SubscribeEvent
     public void onEntityInteract(EntityInteractEvent event) {
         if (event.target instanceof EntityBat) {
-            EntityPlayer p = event.entityPlayer;
-            if (!p.worldObj.isRemote) {
-                ItemStack item = p.inventory.getCurrentItem();
-                if (item != null && item.getItem() == TAME_ITEM_ID) {
-                    event.setCanceled(true);
-                    p.inventory.consumeInventoryItem(TAME_ITEM_ID);
-                    
-                    EntityBat b = (EntityBat) event.target;
-                    EntityPetBat newPet = new EntityPetBat(p.worldObj);
-                    newPet.setLocationAndAngles(b.posX, b.posY, b.posZ, b.rotationYaw, b.rotationPitch);
-                    newPet.setNames(p.getGameProfile().getName(), getRandomBatName());
-                    newPet.setOwnerEntity(p);
-                    
-                    p.worldObj.spawnEntityInWorld(newPet);
-                    b.setDead();
-                }
-            }
+           this.tamePet(event);
         }
-        
-//        if (glisterBatEnabled && event.target instanceof EntityPetBat)
-//        {
-//            EntityPlayer p = event.entityPlayer;
-//            ItemStack item = p.inventory.getCurrentItem();
-//            if (item != null && item.getItem() == GLISTER_ITEM_ID)
-//            {
-//                new GlisterBatAdapter((EntityPetBat) event.target);
-//                p.inventory.consumeInventoryItem(GLISTER_ITEM_ID);
-//            }
-//        }
+    }
+    
+    private void tamePet(EntityInteractEvent event) {
+    	 EntityPlayer p = event.entityPlayer;
+         if (!p.worldObj.isRemote) {
+             ItemStack item = p.inventory.getCurrentItem();
+             if (item != null && item.getItem() == TAME_ITEM_ID) {
+                 event.setCanceled(true);
+                 p.inventory.consumeInventoryItem(TAME_ITEM_ID);
+                 
+                 EntityBat b = (EntityBat) event.target;
+                 EntityPetBat newPet = new EntityPetBat(p.worldObj);
+                 newPet.setLocationAndAngles(b.posX, b.posY, b.posZ, b.rotationYaw, b.rotationPitch);
+                 newPet.setNames(p.getGameProfile().getName(), getRandomBatName());
+                 newPet.setOwnerEntity(p);
+                 
+                 p.worldObj.spawnEntityInWorld(newPet);
+                 b.setDead();
+             }
+         }
     }
     
     @SubscribeEvent

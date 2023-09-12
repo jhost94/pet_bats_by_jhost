@@ -4,8 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import center.jhub.petbat.common.ItemPocketedPetBat;
 import center.jhub.petbat.common.PetBatMod;
+import center.jhub.petbat.common.item.ItemPocketedPetBat;
 import center.jhub.petbat.common.network.NetworkHelper.IPacket;
 import cpw.mods.fml.common.network.ByteBufUtils;
 

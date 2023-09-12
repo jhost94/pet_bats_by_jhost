@@ -10,8 +10,8 @@ import net.minecraft.util.StatCollector;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
-import center.jhub.petbat.common.ItemPocketedPetBat;
 import center.jhub.petbat.common.PetBatMod;
+import center.jhub.petbat.common.item.ItemPocketedPetBat;
 import center.jhub.petbat.common.network.BatNamePacket;
 
 public class GuiPetBatRename extends GuiScreen {
@@ -37,7 +37,7 @@ public class GuiPetBatRename extends GuiScreen {
         level = PetBatMod.instance().getLevelFromExperience(xp);
         maxHealth = 16d + (level * 2);
         health = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getFloat("health") : 0;
-        attackStrength = 1 + level;
+        attackStrength = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatDamage") + level : 1;
         levelTitle = PetBatMod.instance().getLevelTitle(level);
         levelDesc = PetBatMod.instance().getLevelDescription(level);
     }
