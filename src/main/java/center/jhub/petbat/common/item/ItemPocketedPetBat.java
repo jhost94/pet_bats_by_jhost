@@ -60,6 +60,7 @@ public class ItemPocketedPetBat extends Item {
         writeCompoundIntegerToItemStack(batstack, "petbatmod", "BatXP", batEnt.getBatExperience());
         writeCompoundFloatToItemStack(batstack, "petbatmod", "health", batEnt.getHealth());
         writeCompoundIntegerToItemStack(batstack, "petbatmod", "BatDamage", batEnt.getBatAttack());
+        writeCompoundIntegerToItemStack(batstack, "petbatmod", "BatDamageFrag", batEnt.getBatAttackItemGivenCount());
         batstack.getTagCompound().getCompoundTag("petbatmod").setFloat("health", batEnt.getHealth());
         batstack.setItemDamage((int) invertHealthValue(batEnt.getHealth(), batEnt.getMaxHealth()));
         return batstack;
@@ -71,13 +72,15 @@ public class ItemPocketedPetBat extends Item {
         String name = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("display").getString("Name") : "Battus Genericus";
         int xp = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatXP") : 0;
         int atk = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatDamage") : 0;
+        int atkFrag = batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatDamageFrag") : 0;
         if (owner.equals("")) owner = player.getCommandSenderName();
         if (name.equals("")) name = "Battus Genericus";
         batEnt.setNames(owner, name);
         batEnt.setOwnerEntity(player);
         batEnt.setBatExperience(xp);
         batEnt.setHealth(batStack.stackTagCompound != null ? batStack.stackTagCompound.getCompoundTag("petbatmod").getFloat("health") : batEnt.getMaxHealth());
-        batEnt.addBatAttack(atk);
+        batEnt.setAttack(atk);
+        batEnt.addBatAttack(atkFrag);
         return batEnt;
     }
     

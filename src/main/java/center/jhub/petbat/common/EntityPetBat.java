@@ -29,14 +29,22 @@ import center.jhub.petbat.common.batAI.PetBatAIFlying;
 import center.jhub.petbat.common.batAI.PetBatAIOwnerAttacked;
 import center.jhub.petbat.common.batAI.PetBatAIOwnerAttacks;
 import center.jhub.petbat.common.item.ItemPocketedPetBat;
+import center.jhub.petbat.common.model.AttackIncreaseModel;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
 
 public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpawnData {
+	private static final int DATA_WATCHER_IS_HANGING_ID = 16;
+	private static final int DATA_WATCHER_XP_ID = 17;
+	private static final int DATA_WATCHER_IS_STAYING_ID = 18;
+	private static final int DATA_WATCHER_ATTACK_ITEMS_GIVEN_ID = 19;
+	private static final int DATA_WATCHER_ATTACK_ID = 20;
+	
+	public static final int NEDED_ITEMS_FOR_ATTACK_INCREASE = 10;
+	private static final Item ITEM_FOR_ATTACK_INCREASE = Items.diamond;
+	
     private String ownerName;
     private String petName;
-    private int attack;
-    
     private EntityPlayer owner;
     private EntityItem foodAttackTarget;
     private boolean fluteOut;
@@ -61,8 +69,6 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
         setIsBatHanging(false);
         ownerName = "";
         petName = "";
-        attack = 1;
-        
         interactiableItems.add(Items.diamond);
         
         lastOwnerX = lastOwnerY = lastOwnerZ = 0;
@@ -93,14 +99,13 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     @Override
     protected void entityInit() {
         super.entityInit();
-        // is hanging
-        dataWatcher.addObject(16, (byte) 0);
-        // xp
-        dataWatcher.addObject(17, (int) 0);
-        // is staying
-        dataWatcher.addObject(18, (byte) 0);
+        dataWatcher.addObject(DATA_WATCHER_IS_HANGING_ID, (byte) 0);
+        dataWatcher.addObject(DATA_WATCHER_XP_ID, (int) 0);
+        dataWatcher.addObject(DATA_WATCHER_IS_STAYING_ID, (byte) 0);
+        // attack items given
+        dataWatcher.addObject(DATA_WATCHER_ATTACK_ITEMS_GIVEN_ID, (int) 0);
         // attack
-        dataWatcher.addObject(19, (int) 0);
+        dataWatcher.addObject(DATA_WATCHER_ATTACK_ID, (int) 0);
     }
 
     public void setNames(String ownerName, String petName) {
@@ -211,12 +216,22 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     }
     
     private void givePetItem(EntityPlayer player, Item item) {
-    	if (item == Items.diamond) {
-            player.inventory.consumeInventoryItem(Items.diamond);
-            addBatAttack(1);
-            player.addChatMessage(new ChatComponentText(petName + ": has gained +1 attack."));
-			player.addChatMessage(new ChatComponentText(petName + ": has " + getBatAttack() + " attack."));
+    	if (item.equals(ITEM_FOR_ATTACK_INCREASE)) {
+            player.inventory.consumeInventoryItem(ITEM_FOR_ATTACK_INCREASE);
+            AttackIncreaseModel model = addBatAttack(1);
+            petAnnounceInChat(player, model);
         }
+    }
+    
+    private void petAnnounceInChat(EntityPlayer player, AttackIncreaseModel model) {
+    	if (model.getAttackAttackItemCountAdded() > 0) {
+    		player.addChatMessage(new ChatComponentText(petName + " has gained +" + model.getAttackAttackItemCountAdded() + " steps towards gaining ATK."));
+    	}
+    	if (model.getAttackAdded() > 0) {
+    		player.addChatMessage(new ChatComponentText(petName + ": has gained +" + model.getAttackAdded() + " attack."));
+    		player.addChatMessage(new ChatComponentText(petName + ": has " + model.getCurrentAttack() + " attack."));
+    	}
+		player.addChatMessage(new ChatComponentText(petName + " has now " + model.getCurrentAttackItemCount() + "/" + NEDED_ITEMS_FOR_ATTACK_INCREASE + " to the next ATK bonus."));
     }
 
     /**
@@ -228,7 +243,7 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     @Override
     public boolean attackEntityAsMob(Entity target) {
         int level = getBatLevel();
-        int damage = getBatAttack() + level;
+        int damage = getBatAttack();
 
         float prevHealth = 0;
         EntityLivingBase livingTarget = null;
@@ -344,7 +359,7 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     }
 
     public void setBatExperience(int value) {
-        dataWatcher.updateObject(17, value);
+        dataWatcher.updateObject(DATA_WATCHER_XP_ID, value);
         getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(16d + (2 * PetBatMod.instance().getLevelFromExperience(value)));
     }
 
@@ -478,19 +493,34 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
         return petName;
     }
 
-    public boolean glister;
-
-    public void setGlistering(boolean set) {
-        glister = set;
+    public void setAttack(int atk) {
+    	dataWatcher.updateObject(DATA_WATCHER_ATTACK_ID, atk);
+    }
+    
+    public int getBatAttackItemGivenCount() {
+    	return dataWatcher.getWatchableObjectInt(DATA_WATCHER_ATTACK_ITEMS_GIVEN_ID);
+    }
+    
+    public void setBatAttackItemGivenCount(int atkFrag) {
+    	dataWatcher.updateObject(DATA_WATCHER_ATTACK_ITEMS_GIVEN_ID, atkFrag);
     }
     
     public int getBatAttack() {
-    	return dataWatcher.getWatchableObjectInt(19);
+    	return dataWatcher.getWatchableObjectInt(DATA_WATCHER_ATTACK_ID);
     }
     
-    public int addBatAttack(int atk) {
+    public AttackIncreaseModel addBatAttack(int atkItemsGiven) {
+    	int initialAttackItemGivenCount = getBatAttackItemGivenCount();
     	int initialAttack = getBatAttack();
-    	dataWatcher.updateObject(19, initialAttack + atk);
-    	return getBatAttack();
+    	
+    	return new AttackIncreaseModel(
+    			initialAttack, 
+    			atkItemsGiven, 
+    			initialAttackItemGivenCount, 
+    			NEDED_ITEMS_FOR_ATTACK_INCREASE, 
+    			dataWatcher,
+    			DATA_WATCHER_ATTACK_ID,
+    			DATA_WATCHER_ATTACK_ITEMS_GIVEN_ID
+    			);
     }
 }

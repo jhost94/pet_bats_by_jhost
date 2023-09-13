@@ -244,12 +244,11 @@ public class PetBatMod implements Proxy {
         return batNames[new Random().nextInt(batNames.length)];
     }
     
-    @SuppressWarnings("rawtypes")
+//    @SuppressWarnings("rawtypes")
     @SubscribeEvent
     public void onItemToss(ItemTossEvent event) {
         if (!event.entity.worldObj.isRemote) {
             EntityItem itemDropped = event.entityItem;
-            System.out.println("PlayerDropsEvent iterating over drop "+itemDropped);
             EntityItem foundItem;
             final Item id = itemDropped.getEntityItem().getItem();
             if (id == itemPocketedBat) {

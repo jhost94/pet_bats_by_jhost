@@ -16,7 +16,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class RenderPetBat extends RenderLiving {
     private ModelPetBat renderModel;
     private ResourceLocation tex = new ResourceLocation("petbat", "textures/model/petbat.png");
-    private ResourceLocation texGlis = new ResourceLocation("petbat", "textures/model/petbat_glister.png");
     
     public RenderPetBat() {
         super(new ModelPetBat(), 0.25F);
@@ -68,7 +67,7 @@ public class RenderPetBat extends RenderLiving {
 
     @Override
     protected ResourceLocation getEntityTexture(Entity entity) {
-        return ((EntityPetBat)entity).glister ? texGlis : tex;
+        return tex;
     }
     
 }
