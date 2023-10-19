@@ -13,11 +13,16 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import center.jhub.petbat.common.EntityPetBat;
+import center.jhub.petbat.common.GradientOrientation;
 import center.jhub.petbat.common.PetBatMod;
 import center.jhub.petbat.common.item.ItemPocketedPetBat;
 import center.jhub.petbat.common.network.BatNamePacket;
 
 public class GuiPetBatRename extends GuiScreen {
+	public static final int PROGRESS_BAR_BG_HEIGHT = 15;
+	public static final int PROGRESS_BAR_INNER_BORDER = 2;
+	public static final int PROGRESS_BAR_OUTER_BORDER = 2;
+	
     private final String screenTitle;
     private final ItemStack petBatItemStack;
     private GuiTextField textfield;
@@ -91,37 +96,42 @@ public class GuiPetBatRename extends GuiScreen {
 
     @Override
     public void drawScreen(int par1, int par2, float par3) {
+    	////
+    	int genericTextCoulor = 0xFFFFFF;
+    	int titleTextCoulor = 0x0000AA;
+    	////
         this.drawDefaultBackground();
 
         int x = this.width / 2;
-        this.drawCenteredString(this.fontRendererObj, this.screenTitle, x, 40, 0x0000AA);
+        this.drawCenteredString(this.fontRendererObj, this.screenTitle, x, 40, titleTextCoulor);
 
         int y = 100;
         drawCenteredString(fontRendererObj, (EnumChatFormatting.BOLD + StatCollector.translateToLocal("translation.PetBat:level")
-                + EnumChatFormatting.RESET + level + " " + levelTitle), x, y, 0xFFFFFF);
+                + EnumChatFormatting.RESET + level + " " + levelTitle), x, y, genericTextCoulor);
         y += 12;
         drawCenteredString(
                 fontRendererObj,
                 (EnumChatFormatting.BOLD + StatCollector.translateToLocal("translation.PetBat:experience") + EnumChatFormatting.RESET + xp + (xpToNext == -1
-                        ? "" : StatCollector.translateToLocal("translation.PetBat:missing_xp") + xpToNext)), x, y, 0xFFFFFF);
+                        ? "" : StatCollector.translateToLocal("translation.PetBat:missing_xp") + xpToNext)), x, y, genericTextCoulor);
         y += 12;
         drawCenteredString(fontRendererObj, (EnumChatFormatting.BOLD + StatCollector.translateToLocal("translation.PetBat:health")
-                + EnumChatFormatting.RESET + health + " / " + maxHealth), x, y, 0xFFFFFF);
+                + EnumChatFormatting.RESET + health + " / " + maxHealth), x, y, genericTextCoulor);
         y += 12;
         drawCenteredString(fontRendererObj, (EnumChatFormatting.BOLD + StatCollector.translateToLocal("translation.PetBat:attack_power")
-                + EnumChatFormatting.RESET + attackStrength), x, y, 0xFFFFFF);
+                + EnumChatFormatting.RESET + attackStrength), x, y, genericTextCoulor);
 
         ///////////
-        y += 20;
-        int startRect = this.width / 3;
-        int endRect = (this.width * 2) / 3;
-        int atkIncEnd = (int) ((endRect - startRect) * (Integer.valueOf(attackIncCount).floatValue() / Integer.valueOf(attackIncCountMax).floatValue()));
-        drawCenteredString(fontRendererObj, (EnumChatFormatting.BOLD + "Attack bonus progress:"), x, y, 0xFFFFFF);
-        y += 12;
-        // background rect
-        drawMyRect(startRect, y, endRect, (y + 15), 0xFFFFFF, 0.8f);
-        // progress rect
-        drawMyGradientRect(startRect + 2, y + 2, startRect + atkIncEnd - 2, y + 13, 0x0071c2, 0xe5b0ff, 0.8f, 0.3f, true);
+        //// Attack stat
+        y = drawProgressBar(x, 
+        		y, 
+        		"Attack bonus progress:", 
+        		genericTextCoulor, 
+        		0xFFFFFF, 
+        		0x0071c2, 
+        		0xe5b0ff, 
+        		0x0071c2, 
+        		0xe5b0ff);
+        ////
         ///////////
         y += 30;
         drawCenteredString(fontRendererObj, EnumChatFormatting.ITALIC + levelDesc, x, y, 0xC82536);
@@ -169,7 +179,42 @@ public class GuiPetBatRename extends GuiScreen {
         GL11.glDisable(GL11.GL_BLEND);
     }
     
-    private void drawMyGradientRect(int x1, int y1, int x2, int y2, int color1, int color2, float alfa1, float alfa2, boolean horizontal) {
+    private int drawProgressBar(int x, int y, String progressBarText, int progressBarTextCoulor, int progressBGCoulor, int progressCoulor1, int progressCoulor2, int leftTextCoulor, int rightTextCoulor) {
+        y += 20;
+        int startRect = this.width / 3;
+        int endRect = (this.width * 2) / 3;
+        int atkIncEnd = (int) ((endRect - startRect) * (Integer.valueOf(attackIncCount).floatValue() / Integer.valueOf(attackIncCountMax).floatValue()));
+        drawCenteredString(fontRendererObj, (EnumChatFormatting.BOLD + progressBarText), x, y, progressBarTextCoulor);
+        y += 12;
+        // background rect
+        drawMyRect(startRect, y, endRect, y + PROGRESS_BAR_BG_HEIGHT, progressBGCoulor, 0.8f);
+        // progress rect
+        int endRect2 = Math.max(startRect + atkIncEnd - PROGRESS_BAR_INNER_BORDER, startRect + PROGRESS_BAR_INNER_BORDER + 3);
+        drawMyGradientRect(startRect + PROGRESS_BAR_INNER_BORDER, 
+        		y + PROGRESS_BAR_INNER_BORDER, 
+        		endRect2, 
+        		y + PROGRESS_BAR_BG_HEIGHT - PROGRESS_BAR_INNER_BORDER, 
+        		progressCoulor1, progressCoulor2, 0.8f, 0.3f, GradientOrientation.HORIZONTAL);
+        // current items given, before the progress bar
+        String attackItemCountString = "" + attackIncCount;
+        int itemCountXOffset = attackItemCountString.length() + 2;
+        int textY = y + (PROGRESS_BAR_BG_HEIGHT/ 2) - 3;
+        drawString(fontRendererObj, 
+        		EnumChatFormatting.BOLD + attackItemCountString, 
+        		startRect - PROGRESS_BAR_OUTER_BORDER - itemCountXOffset, 
+        		textY, 
+        		leftTextCoulor);
+        // items needed, after the progress bar 
+        drawString(fontRendererObj, 
+        		EnumChatFormatting.BOLD + "" + attackIncCountMax, 
+        		endRect + PROGRESS_BAR_OUTER_BORDER + 1, 
+        		textY, 
+        		rightTextCoulor);
+        
+        return y;
+    }
+    
+    private void drawMyGradientRect(int x1, int y1, int x2, int y2, int color1, int color2, float alfa1, float alfa2, GradientOrientation orientation) {
         float red1 = (float)(color1 >> 16 & 255) / 255.0F;
         float green1 = (float)(color1 >> 8 & 255) / 255.0F;
         float blue1 = (float)(color1 & 255) / 255.0F;
@@ -184,20 +229,23 @@ public class GuiPetBatRename extends GuiScreen {
         Tessellator tessellator = Tessellator.instance;
         tessellator.startDrawingQuads();
         
-        if (horizontal) {
-        	tessellator.setColorRGBA_F(red1, green1, blue1, alfa1);
-            tessellator.addVertex((double)x1, (double)y1, (double)this.zLevel);
-            tessellator.addVertex((double)x1, (double)y2, (double)this.zLevel);
-            tessellator.setColorRGBA_F(red2, green2, blue2, alfa2);
-            tessellator.addVertex((double)x2, (double)y2, (double)this.zLevel);
-            tessellator.addVertex((double)x2, (double)y1, (double)this.zLevel);
-        } else {
-          tessellator.setColorRGBA_F(red1, green1, blue1, alfa1);
-          tessellator.addVertex((double)x2, (double)y1, (double)this.zLevel);
-          tessellator.addVertex((double)x1, (double)y1, (double)this.zLevel);
-          tessellator.setColorRGBA_F(red2, green2, blue2, alfa2);
-          tessellator.addVertex((double)x1, (double)y2, (double)this.zLevel);
-          tessellator.addVertex((double)x2, (double)y2, (double)this.zLevel);
+        switch(orientation) {
+	        case HORIZONTAL:
+	        	tessellator.setColorRGBA_F(red1, green1, blue1, alfa1);
+	            tessellator.addVertex((double)x1, (double)y1, (double)this.zLevel);
+	            tessellator.addVertex((double)x1, (double)y2, (double)this.zLevel);
+	            tessellator.setColorRGBA_F(red2, green2, blue2, alfa2);
+	            tessellator.addVertex((double)x2, (double)y2, (double)this.zLevel);
+	            tessellator.addVertex((double)x2, (double)y1, (double)this.zLevel);
+	            break;
+	        default:
+	          tessellator.setColorRGBA_F(red1, green1, blue1, alfa1);
+	          tessellator.addVertex((double)x2, (double)y1, (double)this.zLevel);
+	          tessellator.addVertex((double)x1, (double)y1, (double)this.zLevel);
+	          tessellator.setColorRGBA_F(red2, green2, blue2, alfa2);
+	          tessellator.addVertex((double)x1, (double)y2, (double)this.zLevel);
+	          tessellator.addVertex((double)x2, (double)y2, (double)this.zLevel);
+	          break;
         }
         
         
