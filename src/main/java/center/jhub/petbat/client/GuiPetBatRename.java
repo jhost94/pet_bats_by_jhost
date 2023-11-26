@@ -27,9 +27,9 @@ public class GuiPetBatRename extends GuiScreen {
     private final ItemStack petBatItemStack;
     private GuiTextField textfield;
 
-    private final int xp;
-    private final int xpToNext;
-    private final int level;
+    private final long xp;
+    private final long xpToNext;
+    private final long level;
     private final double maxHealth;
     private final double health;
     private final int attackStrength;
@@ -42,12 +42,12 @@ public class GuiPetBatRename extends GuiScreen {
         petBatItemStack = stack;
         screenTitle = StatCollector.translateToLocal("translation.PetBat:gui_title");
 
-        xp = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatXP") : 0;
-        xpToNext = PetBatMod.instance().getMissingExperienceToNextLevel(xp);
-        level = PetBatMod.instance().getLevelFromExperience(xp);
+        xp = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getLong("BatXP") : 0;
+        level = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getLong("BatLevel") : 0;
+        xpToNext = PetBatMod.instance().getMissingExperienceToNextLevel(level, xp);
         maxHealth = 16d + (level * 2);
         health = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getFloat("health") : 0;
-        attackStrength = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatDamage") + level : 1;
+        attackStrength = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatDamage") : 1;
         attackIncCount = stack.stackTagCompound != null ? stack.stackTagCompound.getCompoundTag("petbatmod").getInteger("BatDamageFrag") : 0;
         attackIncCountMax = EntityPetBat.NEDED_ITEMS_FOR_ATTACK_INCREASE;
         levelTitle = PetBatMod.instance().getLevelTitle(level);

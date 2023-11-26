@@ -38,6 +38,7 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
+import static center.jhub.petbat.common.EntityPetBat.BASE_XP_TO_LEVEL_UP;;
 
 @Mod(modid = "PetBat", name = "Pet Bat", version = "1.3.8")
 public class PetBatMod implements Proxy {
@@ -116,7 +117,7 @@ public class PetBatMod implements Proxy {
         return (int) Math.floor((lvl / 0.75f) * 100);
     }
     
-    public int getMissingExperienceToNextLevel(int xp) {
+    public long getMissingExperienceToNextLevel(long level, long xp) {
         /** old system
         if (xp < 25) return 25-xp;
         if (xp < 75) return 75-xp;
@@ -126,18 +127,19 @@ public class PetBatMod implements Proxy {
         if (xp < 1575) return 1575-xp;
         return -1;
          */
-        if (xp < 25) return 25-xp;
-        if (xp < 75) return 75-xp;
-        return getRequiredExpForUpperLevel(getUpperLevel(xp) + 1);
+        //if (xp < 25) return 25-xp;
+        //if (xp < 75) return 75-xp;
+        //return getRequiredExpForUpperLevel(getUpperLevel(xp) + 1);
+        return (long) Math.floor((level / 0.75f) * 100) + BASE_XP_TO_LEVEL_UP;
     }
     
-    public String getLevelTitle(int level) {
-        int finalLevel = Math.min(6, level);
-        return StatCollector.translateToLocal("translation.PetBat:batlevel"+finalLevel);
+    public String getLevelTitle(long level) {
+        long finalLevel = Math.min(6, level);
+        return StatCollector.translateToLocal("translation.PetBat:batlevel" + finalLevel);
     }
     
-    public String getLevelDescription(int level) {
-        int finalLevel = Math.min(6, level);
+    public String getLevelDescription(long level) {
+        long finalLevel = Math.min(6, level);
         return StatCollector.translateToLocal("translation.PetBat:batlevel" + finalLevel + "desc");
     }
     
@@ -260,7 +262,7 @@ public class PetBatMod implements Proxy {
                 } else {
                     // bat is inert. see if it was tossed onto pumpkin pie for revival
                     
-                    final List nearEnts = itemDropped.worldObj.getEntitiesWithinAABBExcludingEntity(itemDropped, itemDropped.boundingBox.expand(8D, 8D, 8D));
+                    final List<Object> nearEnts = itemDropped.worldObj.getEntitiesWithinAABBExcludingEntity(itemDropped, itemDropped.boundingBox.expand(8D, 8D, 8D));
                     for (Object o : nearEnts) {
                         if (o instanceof EntityItem) {
                             foundItem = (EntityItem) o;

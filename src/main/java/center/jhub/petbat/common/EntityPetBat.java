@@ -15,6 +15,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChunkCoordinates;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
@@ -39,7 +40,9 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
 	private static final int DATA_WATCHER_IS_STAYING_ID = 18;
 	private static final int DATA_WATCHER_ATTACK_ITEMS_GIVEN_ID = 19;
 	private static final int DATA_WATCHER_ATTACK_ID = 20;
-	
+	private static final int DATA_WATCHER_LEVEL_ID = 21;
+
+	public static final int BASE_XP_TO_LEVEL_UP = 20;
 	public static final int NEDED_ITEMS_FOR_ATTACK_INCREASE = 10;
 	private static final Item ITEM_FOR_ATTACK_INCREASE = Items.diamond;
 	
@@ -100,12 +103,15 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     protected void entityInit() {
         super.entityInit();
         dataWatcher.addObject(DATA_WATCHER_IS_HANGING_ID, (byte) 0);
+        // XP
         dataWatcher.addObject(DATA_WATCHER_XP_ID, (int) 0);
         dataWatcher.addObject(DATA_WATCHER_IS_STAYING_ID, (byte) 0);
         // attack items given
         dataWatcher.addObject(DATA_WATCHER_ATTACK_ITEMS_GIVEN_ID, (int) 0);
         // attack
         dataWatcher.addObject(DATA_WATCHER_ATTACK_ID, (int) 0);
+        // level
+        dataWatcher.addObject(DATA_WATCHER_LEVEL_ID, (int) 0);
     }
 
     public void setNames(String ownerName, String petName) {
@@ -205,9 +211,19 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     			this.givePetItem(player, item.getItem());
     		} else {
     			setIsBatStaying(!getIsBatStaying());
-                player.addChatMessage(new ChatComponentText(petName + ": " + 
-                (getIsBatStaying() ? StatCollector.translateToLocal("translation.PetBat:staying")
-                        : StatCollector.translateToLocal("translation.PetBat:notstaying"))));
+    			ChatComponentText msg = new ChatComponentText(petName + ": " + 
+    	                (getIsBatStaying() ? StatCollector.translateToLocal("translation.PetBat:staying") + "FUCK"
+    	                        : StatCollector.translateToLocal("translation.PetBat:notstaying")));
+                player.addChatMessage(msg);
+                ChatComponentText debugMsg = new ChatComponentText(EnumChatFormatting.BOLD + "" + EnumChatFormatting.AQUA + "Level: " + EnumChatFormatting.RESET + "" + EnumChatFormatting.BLUE + getBatLevel());
+                ChatComponentText debugMsg2 = new ChatComponentText(EnumChatFormatting.BOLD + "" + EnumChatFormatting.AQUA + "XP: " + EnumChatFormatting.RESET + "" + EnumChatFormatting.BLUE + getBatXP());
+                ChatComponentText debugMsg11 = new ChatComponentText("Level: " + getBatLevel());
+                ChatComponentText debugMsg21 = new ChatComponentText("XP: " + getBatXP());
+                
+                player.addChatMessage(debugMsg);
+                player.addChatMessage(debugMsg2);
+                player.addChatMessage(debugMsg11);
+                player.addChatMessage(debugMsg21);
     		}
              return true;
     	}
@@ -242,7 +258,7 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
      */
     @Override
     public boolean attackEntityAsMob(Entity target) {
-        int level = getBatLevel();
+        long level = getBatLevel();
         int damage = getBatAttack();
 
         float prevHealth = 0;
@@ -327,18 +343,18 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     }
 
     public boolean getIsBatHanging() {
-        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
+        return (this.dataWatcher.getWatchableObjectByte(DATA_WATCHER_IS_HANGING_ID) & 1) != 0;
     }
 
     public void setIsBatHanging(boolean par1) {
         setHangingSpot(null);
 
-        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
+        byte isHanging = this.dataWatcher.getWatchableObjectByte(DATA_WATCHER_IS_HANGING_ID);
 
         if (par1) {
-            this.dataWatcher.updateObject(16, Byte.valueOf((byte) (var2 | 1)));
+            this.dataWatcher.updateObject(DATA_WATCHER_IS_HANGING_ID, Byte.valueOf((byte) (isHanging | 1)));
         } else {
-            this.dataWatcher.updateObject(16, Byte.valueOf((byte) (var2 & -2)));
+            this.dataWatcher.updateObject(DATA_WATCHER_IS_HANGING_ID, Byte.valueOf((byte) (isHanging & -2)));
         }
     }
 
@@ -369,10 +385,6 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
 
     public void setIsBatStaying(boolean cond) {
         dataWatcher.updateObject(18, (byte) (cond ? 1 : 0));
-    }
-
-    public int getBatLevel() {
-        return PetBatMod.instance().getLevelFromExperience(getBatExperience());
     }
 
     /**
@@ -509,6 +521,36 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     	return dataWatcher.getWatchableObjectInt(DATA_WATCHER_ATTACK_ID);
     }
     
+    public long getBatLevel() {
+    	return dataWatcher.getWatchableObjectInt(DATA_WATCHER_LEVEL_ID);
+    }
+    
+    public long getBatXP() {
+    	return dataWatcher.getWatchableObjectInt(DATA_WATCHER_XP_ID);
+    }
+    
+    public void setBatLevel(long level) {
+    	dataWatcher.updateObject(DATA_WATCHER_LEVEL_ID, level);
+    }
+    
+    public void setBatXP(long xp) {
+    	dataWatcher.updateObject(DATA_WATCHER_XP_ID, xp);
+    }
+    
+    public void addBatXP(long xp) {
+    	long currentLevel = getBatLevel();
+    	long xpNeeded = PetBatMod.instance().getMissingExperienceToNextLevel(currentLevel, xp);
+    	if (xp >= xpNeeded) {
+    		long lvlsToAdd = (long) Math.floor(xp / xpNeeded);
+    		long remainingXp = xp % xpNeeded;
+    		setBatXP(remainingXp);
+    		setBatLevel(currentLevel + lvlsToAdd);
+    	} else {
+    		long currentXP = getBatXP();
+    		setBatXP(currentXP + xp);
+    	}
+    }
+
     public AttackIncreaseModel addBatAttack(int atkItemsGiven) {
     	int initialAttackItemGivenCount = getBatAttackItemGivenCount();
     	int initialAttack = getBatAttack();
