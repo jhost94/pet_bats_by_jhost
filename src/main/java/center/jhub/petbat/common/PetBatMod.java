@@ -40,7 +40,7 @@ import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 import static center.jhub.petbat.common.EntityPetBat.BASE_XP_TO_LEVEL_UP;;
 
-@Mod(modid = "PetBat", name = "Pet Bat", version = "1.3.8")
+@Mod(modid = "PetBat", name = "Pet Bat", version = "2.0.0")
 public class PetBatMod implements Proxy {
     private Item TAME_ITEM_ID;
     public final byte BAT_MAX_LVL = 1;
@@ -57,6 +57,8 @@ public class PetBatMod implements Proxy {
     @Instance(value = "PetBat")
     private static PetBatMod instance;
 
+    public NetworkHelper networkHelper;
+    
     public static PetBatMod instance() {
         return instance;
     }
@@ -91,46 +93,17 @@ public class PetBatMod implements Proxy {
      * 775 - lvl 5, 400 xp diff
      * 1575 - lvl 6, 800 xp diff
      */
-    public int getLevelFromExperience(int xp) {
-        /** Old system
-        if (xp < 25) return 0;
-        if (xp < 75) return 1;
-        if (xp < 175) return 2;
-        if (xp < 375) return 3;
-        if (xp < 775) return 4;
-        if (xp < 1575) return 5;
-        return 6;
-         */
-        if (xp < 25) return 0;
-        if (xp < 100) return 1;
-        return getUpperLevel(xp);
+    public long getLevelFromExperience(long xp) {
+        return PetBatUtility.getLevelFromExperience(xp);
     }
 
-    /**
-     * change later
-     */
-    private int getUpperLevel(int xp) {
-        return (int) Math.max(Math.floor(Math.ceil(xp / 100) * 0.75f), 2);
-    }
-
-    private int getRequiredExpForUpperLevel(int lvl) {
-        return (int) Math.floor((lvl / 0.75f) * 100);
+    public long getMissingExperienceToNextLevel(long level, long xp) {
+        return PetBatUtility.getMissingExperienceToNextLevel(level, xp);
     }
     
-    public long getMissingExperienceToNextLevel(long level, long xp) {
-        /** old system
-        if (xp < 25) return 25-xp;
-        if (xp < 75) return 75-xp;
-        if (xp < 175) return 175-xp;
-        if (xp < 375) return 375-xp;
-        if (xp < 775) return 775-xp;
-        if (xp < 1575) return 1575-xp;
-        return -1;
-         */
-        //if (xp < 25) return 25-xp;
-        //if (xp < 75) return 75-xp;
-        //return getRequiredExpForUpperLevel(getUpperLevel(xp) + 1);
-        return (long) Math.floor((level / 0.75f) * 100) + BASE_XP_TO_LEVEL_UP;
+    public int getMissingExperienceToNextLevelInt(long level, long xp) {
+    	long xp2 = getMissingExperienceToNextLevel(level, xp);
+        return (int) Math.min(xp2, Integer.MAX_VALUE);
     }
     
     public String getLevelTitle(long level) {
@@ -142,8 +115,6 @@ public class PetBatMod implements Proxy {
         long finalLevel = Math.min(6, level);
         return StatCollector.translateToLocal("translation.PetBat:batlevel" + finalLevel + "desc");
     }
-    
-    public NetworkHelper networkHelper;
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -188,7 +159,7 @@ public class PetBatMod implements Proxy {
     public void onPlayerLeftClick(BreakSpeed event) {
         EntityPlayer p = event.entityPlayer;
         ItemStack item = p.inventory.getCurrentItem();
-        if (item != null && item.getItem() == TAME_ITEM_ID) {
+        if (item != null && item.getItem().equals(TAME_ITEM_ID)) {
             @SuppressWarnings("unchecked")
             List<Entity> entityList = p.worldObj.getEntitiesWithinAABBExcludingEntity(p, p.boundingBox.expand(10D, 10D, 10D));
             ChunkCoordinates coords = new ChunkCoordinates((int)(p.posX+0.5D), (int)(p.posY+1.5D), (int)(p.posZ+0.5D));
@@ -253,7 +224,13 @@ public class PetBatMod implements Proxy {
             EntityItem itemDropped = event.entityItem;
             EntityItem foundItem;
             final Item id = itemDropped.getEntityItem().getItem();
-            if (id == itemPocketedBat) {
+            
+            if (id.equals(itemBatFlute)) { // bat flutes cannot be dropped. ever.
+                event.setCanceled(true);
+                return;
+            }
+            
+            if (id.equals(itemPocketedBat)) {
                 final EntityPetBat bat = ItemPocketedPetBat.toBatEntity(itemDropped.worldObj, itemDropped.getEntityItem(), event.player);
                 if (bat.getHealth() > 1) {
                     bat.setPosition(itemDropped.posX, itemDropped.posY, itemDropped.posZ);
@@ -262,7 +239,7 @@ public class PetBatMod implements Proxy {
                 } else {
                     // bat is inert. see if it was tossed onto pumpkin pie for revival
                     
-                    final List<Object> nearEnts = itemDropped.worldObj.getEntitiesWithinAABBExcludingEntity(itemDropped, itemDropped.boundingBox.expand(8D, 8D, 8D));
+                    final List nearEnts = itemDropped.worldObj.getEntitiesWithinAABBExcludingEntity(itemDropped, itemDropped.boundingBox.expand(8D, 8D, 8D));
                     for (Object o : nearEnts) {
                         if (o instanceof EntityItem) {
                             foundItem = (EntityItem) o;
@@ -280,7 +257,7 @@ public class PetBatMod implements Proxy {
                         }
                     }
                 }
-            } else if (id == TAME_ITEM_ID) {
+            } else if (id.equals(TAME_ITEM_ID)) {
                 final List nearEnts = itemDropped.worldObj.getEntitiesWithinAABBExcludingEntity(itemDropped, itemDropped.boundingBox.expand(8D, 8D, 8D));
                 for (Object o : nearEnts) {
                     if (o instanceof EntityPetBat) {
@@ -303,8 +280,6 @@ public class PetBatMod implements Proxy {
                         }
                     }
                 }
-            } else if (id == itemBatFlute) { // bat flutes cannot be dropped. ever.
-                event.setCanceled(true);
             }
         }
     }
@@ -343,10 +318,12 @@ public class PetBatMod implements Proxy {
     }
     
     public ItemStack removeFluteFromPlayer(EntityPlayer player, String petName) {
+    	if (player == null || player.inventory == null || player.inventory.mainInventory == null) return null;
+    	
         for (int i = 0; i < player.inventory.mainInventory.length; i++) {
             ItemStack item = player.inventory.mainInventory[i];
             if (item != null && item.getItem() == itemBatFlute) {
-                if (item.stackTagCompound != null && item.stackTagCompound.getString("batName").equals(petName)) {
+                if (item.stackTagCompound != null && item.stackTagCompound.getString(PetBatConstants.COMPOUND_BAT_NAME).equals(petName)) {
                     player.inventory.setInventorySlotContents(i, null);
                     return item;
                 }

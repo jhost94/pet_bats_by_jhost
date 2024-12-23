@@ -16,7 +16,7 @@ public class ClientProxy implements Proxy {
 
     @Override
     public void displayGui(ItemStack itemStack) {
-        FMLClientHandler.instance().getClient().displayGuiScreen(new GuiPetBatRename(itemStack));
+        FMLClientHandler.instance().getClient().displayGuiScreen(new GuiPetBat(itemStack));
     }
     
 }
