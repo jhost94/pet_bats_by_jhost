@@ -49,10 +49,9 @@ public class ItemPocketedPetBat extends Item {
     
     @Override
     public boolean hasEffect(ItemStack stack) {
-        return stack.stackTagCompound != null && PetBatMod.instance()
-        		.getLevelFromExperience(stack.stackTagCompound
+        return stack.stackTagCompound != null && stack.stackTagCompound
         				.getCompoundTag(PetBatConstants.COMPOUND_TAG)
-        				.getInteger(PetBatConstants.COMPOUND_BAT_XP)) > 50;
+        				.getInteger(PetBatConstants.COMPOUND_BAT_LEVEL) > 3;
     }
     
     public static ItemStack fromBatEntity(EntityPetBat batEnt) {

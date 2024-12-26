@@ -231,9 +231,8 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
      */
     @Override
     public boolean attackEntityAsMob(Entity target) {
-        long level = getBatLevel();
-        int damage = getBatAttack();
-
+        int level = getBatLevel();
+        int damage = PetBatUtility.calculateDamage(level, getBatAttack());
         float prevHealth = 0;
         EntityLivingBase livingTarget = null;
         if (target instanceof EntityLivingBase) {
@@ -246,13 +245,13 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
             if (livingTarget != null) {
                 float damageDealt = prevHealth - livingTarget.getHealth();
                 if (damageDealt > 0) {
-                    addBatExperience((int) Math.max(1, damageDealt));
+                    addBatXP((long) Math.max(1, damageDealt));
                     if (level > 2) {
                         heal(Math.max(damageDealt / 3, 1));
                     }
                 }
             } else {
-                addBatExperience(damage);
+            	addBatXP(damage);
                 if (level > 2) {
                     heal(Math.max(damage / 3, 1));
                 }
@@ -331,18 +330,6 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
         }
     }
 
-    /**
-     * Bat levels up with all damage it inflicts in combat.
-     * 
-     * @param xp
-     *            one experience point for every point of damage inflicted
-     */
-    private void addBatExperience(int xp) {
-        if (!worldObj.isRemote) {
-            setBatExperience(Integer.valueOf(getBatExperience() + xp));
-        }
-    }
-
     public int getBatExperience() {
         return dataWatcher.getWatchableObjectInt(DATA_WATCHER_XP_ID);
     }
@@ -350,7 +337,7 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     public void setBatExperience(int value) {
         dataWatcher.updateObject(DATA_WATCHER_XP_ID, value);
         getEntityAttribute(SharedMonsterAttributes.maxHealth)
-        	.setBaseValue(PetBatUtility.calculateMaxHealth(PetBatMod.instance().getLevelFromExperience(value)));
+        	.setBaseValue(PetBatUtility.calculateMaxHealth(getBatLevel()));
     }
 
     public boolean getIsBatStaying() {
@@ -485,21 +472,23 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
 
     public void addBatXP(long xp) {
     	long currentLevel = getBatLevel();
-    	long xpNeeded = PetBatMod.instance().getMissingExperienceToNextLevel(currentLevel, xp);
-    	if (xp >= xpNeeded) {
-    		long lvlsToAdd = (long) Math.floor(xp / xpNeeded);
-    		long remainingXp = xp % xpNeeded;
+    	long xpNeeded = PetBatUtility.getExperienceToNextLevel(currentLevel);
+    	long totalXP = getBatXP() + xp;
+    	if (totalXP >= xpNeeded) {
+    		long lvlsToAdd = (long) Math.floor(totalXP / xpNeeded);
+    		long remainingXp = totalXP % xpNeeded;
     		setBatXP(remainingXp > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) remainingXp);
     		long totalToAdd = currentLevel + lvlsToAdd;
     		if (totalToAdd > Integer.MAX_VALUE) {
     			incrementBatPrestige();
-    			setBatLevel(((int) totalToAdd - Integer.MAX_VALUE));
+    			long afterTotal = totalToAdd - Integer.MAX_VALUE;
+    			setBatLevel((int) afterTotal);
     		} else {
     			setBatLevel((int) totalToAdd);
     		}
     	} else {
-    		long currentXP = getBatXP();
-    		setBatXP((int) (currentXP + xp));
+    		long afterTotal = getBatXP() + xp;
+    		setBatXP((int) afterTotal);
     	}
     }
 
@@ -559,6 +548,10 @@ public class EntityPetBat extends EntityCreature implements IEntityAdditionalSpa
     }
     
     public int getBatAttack() {
+    	return dataWatcher.getWatchableObjectInt(DATA_WATCHER_ATTACK_ID);
+    }
+    
+    public int getBatTotalAttack() {
     	return dataWatcher.getWatchableObjectInt(DATA_WATCHER_ATTACK_ID);
     }
     

@@ -50,7 +50,7 @@ public class GuiPetBat extends GuiScreen {
         level = stack.stackTagCompound != null ? 
         		stack.stackTagCompound.getCompoundTag(PetBatConstants.COMPOUND_TAG).getInteger(PetBatConstants.COMPOUND_BAT_LEVEL) 
         		: 0;
-        xpToNext = PetBatMod.instance().getMissingExperienceToNextLevelInt(level, xp);
+        xpToNext = PetBatUtility.getExperienceToNextLevelInt(level, xp);
         maxHealth = PetBatUtility.calculateMaxHealth(level, stack.stackTagCompound != null ? 
         		stack.stackTagCompound.getCompoundTag(PetBatConstants.COMPOUND_TAG).getInteger(PetBatConstants.COMPOUND_BAT_MAX_HEALTH)
         		: 0);
@@ -125,8 +125,8 @@ public class GuiPetBat extends GuiScreen {
         y += 12;
         drawCenteredString(
                 fontRendererObj,
-                (EnumChatFormatting.BOLD + StatCollector.translateToLocal("translation.PetBat:experience") + EnumChatFormatting.RESET + xp + (xpToNext == -1
-                        ? "" : StatCollector.translateToLocal("translation.PetBat:missing_xp") + xpToNext)), x, y, genericTextCoulor);
+                (EnumChatFormatting.BOLD + StatCollector.translateToLocal("translation.PetBat:experience") + EnumChatFormatting.RESET 
+                		+ xp + StatCollector.translateToLocal("translation.PetBat:missing_xp") + xpToNext), x, y, genericTextCoulor);
         y += 12;
         drawCenteredString(fontRendererObj, (EnumChatFormatting.BOLD + StatCollector.translateToLocal("translation.PetBat:health")
                 + EnumChatFormatting.RESET + health + " / " + maxHealth), x, y, genericTextCoulor);

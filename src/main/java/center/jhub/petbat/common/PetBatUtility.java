@@ -22,40 +22,36 @@ public final class PetBatUtility {
 		return calculateMaxHealth(level) + bonus;
 	}
 	
+	public static int calculateDamage(int level) {
+		return 1 + (level / 5);
+	}
+	
+	public static int calculateDamage(int level, int bonus) {
+		return calculateDamage(level) + bonus;
+	}
+	
+	public static long getExperienceToNextLevel(long level) {
+		long lvl = level + 1; //11
+		long lvlExponent = lvl / 3 * 2; //7
+        return (long) Math.floor((lvl / 0.75f) * 20 * lvlExponent) + BASE_XP_TO_LEVEL_UP; // 1.5 * 20 * 3 + 20 = 110  lvl 1->2 = 110 lvl 10 ->12 = 1175
+    }
+	
 	public static long getMissingExperienceToNextLevel(long level, long xp) {
-        /** old system
-        if (xp < 25) return 25-xp;
-        if (xp < 75) return 75-xp;
-        if (xp < 175) return 175-xp;
-        if (xp < 375) return 375-xp;
-        if (xp < 775) return 775-xp;
-        if (xp < 1575) return 1575-xp;
-        return -1;
-         */
-        //if (xp < 25) return 25-xp;
-        //if (xp < 75) return 75-xp;
-        //return getRequiredExpForUpperLevel(getUpperLevel(xp) + 1);
-        return (long) Math.floor((level / 0.75f) * 100) + BASE_XP_TO_LEVEL_UP;
+        return getExperienceToNextLevel(level) - xp;
+    }
+	
+	public static int getExperienceToNextLevelInt(long level) {
+    	long xp2 = getExperienceToNextLevel(level);
+        return (int) Math.min(xp2, Integer.MAX_VALUE);
+    }
+	
+	public static int getExperienceToNextLevelInt(long level, long xp) {
+        return (int) (getExperienceToNextLevelInt(level) - xp);
     }
 	
 	public static void messagePlayer(EntityPlayer player, String message) {
 		player.addChatMessage(new ChatComponentText(message));
 	}
-	
-	public static long getLevelFromExperience(long xp) {
-        /** Old system
-        if (xp < 25) return 0;
-        if (xp < 75) return 1;
-        if (xp < 175) return 2;
-        if (xp < 375) return 3;
-        if (xp < 775) return 4;
-        if (xp < 1575) return 5;
-        return 6;
-         */
-        if (xp < 25) return 0;
-        if (xp < 100) return 1;
-        return getUpperLevel(xp);
-    }
 	
 	public static String themeMessage(int theme, String key, String value) {
 		return THEMES[theme - 1][0] + key + THEMES[theme - 1][1] + value;
@@ -68,14 +64,11 @@ public final class PetBatUtility {
 	public static String theme1Message(String key, int value) {
 		return theme1Message(key, "" + value);
 	}
+	
+	public static String theme1Message(String key, long value) {
+		return theme1Message(key, "" + value);
+	}
 
-    /**
-     * change later
-     */
-    private static long getUpperLevel(long xp) {
-        return (int) Math.max(Math.floor(Math.ceil(xp / 100) * 0.75f), 2);
-    }
-    
     public static double invertHealthValue(double input, double max) {
         return Math.abs((input * PetBatConstants.INVENTORY_POCKET_BAT_ITEM_MAX_HEALTH)/ max);
     }

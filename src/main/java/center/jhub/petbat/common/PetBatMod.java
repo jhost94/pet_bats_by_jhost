@@ -28,7 +28,6 @@ import center.jhub.petbat.common.item.ItemBatFlute;
 import center.jhub.petbat.common.item.ItemPocketedPetBat;
 import center.jhub.petbat.common.network.BatNamePacket;
 import center.jhub.petbat.common.network.NetworkHelper;
-import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
@@ -38,7 +37,6 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
-import static center.jhub.petbat.common.EntityPetBat.BASE_XP_TO_LEVEL_UP;;
 
 @Mod(modid = "PetBat", name = "Pet Bat", version = "2.0.0")
 public class PetBatMod implements Proxy {
@@ -82,29 +80,6 @@ public class PetBatMod implements Proxy {
             "Mircea",
             "Radu"
     };
-    
-    /**
-     * experience to levels table
-     * 0 - no xp
-     * 25 - lvl 1, 25 xp diff
-     * 75 - lvl 2, 50 xp diff
-     * 175 - lvl 3, 100 xp diff
-     * 375 - lvl 4, 200 xp diff
-     * 775 - lvl 5, 400 xp diff
-     * 1575 - lvl 6, 800 xp diff
-     */
-    public long getLevelFromExperience(long xp) {
-        return PetBatUtility.getLevelFromExperience(xp);
-    }
-
-    public long getMissingExperienceToNextLevel(long level, long xp) {
-        return PetBatUtility.getMissingExperienceToNextLevel(level, xp);
-    }
-    
-    public int getMissingExperienceToNextLevelInt(long level, long xp) {
-    	long xp2 = getMissingExperienceToNextLevel(level, xp);
-        return (int) Math.min(xp2, Integer.MAX_VALUE);
-    }
     
     public String getLevelTitle(long level) {
         long finalLevel = Math.min(6, level);
